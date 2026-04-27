@@ -7,25 +7,25 @@ const args = process.argv.slice(2);
 
 if (args.length === 0) {
   console.log(`
-  migrate-inngest-v4 — Inngest TypeScript SDK v3 → v4 codemod
+  migrate-wagmi-v3 — wagmi v2 → v3 codemod
 
   Usage:
-    npx migrate-inngest-v4 <path-to-project>
+    npx migrate-wagmi-v3 <path-to-project>
 
   Example:
-    npx migrate-inngest-v4 ./my-project
-    npx migrate-inngest-v4 .
+    npx migrate-wagmi-v3 ./my-project
+    npx migrate-wagmi-v3 .
   `);
   process.exit(0);
 }
 
 const targetPath = path.resolve(process.cwd(), args[0]);
 
-console.log(`\n🔍 Scanning ${targetPath} for Inngest v3 patterns...\n`);
+console.log(`\n🔍 Scanning ${targetPath} for wagmi v2 patterns...\n`);
 
 migrate(targetPath).then((results) => {
   if (results.length === 0) {
-    console.log("✅ No Inngest v3 patterns found. Already on v4?");
+    console.log("✅ No wagmi v2 patterns found. Already on v3?");
     process.exit(0);
   }
 

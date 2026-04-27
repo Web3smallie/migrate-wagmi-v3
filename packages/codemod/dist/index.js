@@ -36,14 +36,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.migrate = migrate;
 const glob_1 = require("glob");
 const fs = __importStar(require("fs"));
-const createFunction_1 = require("./transforms/createFunction");
-const serveOptions_1 = require("./transforms/serveOptions");
-const serveHost_1 = require("./transforms/serveHost");
-const streaming_1 = require("./transforms/streaming");
-const stepInvoke_1 = require("./transforms/stepInvoke");
-const logLevel_1 = require("./transforms/logLevel");
-const gatewayEndpoint_1 = require("./transforms/gatewayEndpoint");
-const eventSchemas_1 = require("./transforms/eventSchemas");
+const useAccount_1 = require("./transforms/useAccount");
+const useAccountEffect_1 = require("./transforms/useAccountEffect");
+const useSwitchAccount_1 = require("./transforms/useSwitchAccount");
+const connectorImports_1 = require("./transforms/connectorImports");
+const mutateArgs_1 = require("./transforms/mutateArgs");
+const importRenames_1 = require("./transforms/importRenames");
 async function migrate(targetPath) {
     const results = [];
     const files = await (0, glob_1.glob)("**/*.{ts,tsx,js,jsx}", {
@@ -53,50 +51,42 @@ async function migrate(targetPath) {
     });
     for (const file of files) {
         const source = fs.readFileSync(file, "utf-8");
-        if (!source.includes("inngest"))
+        if (!source.includes("wagmi"))
             continue;
         let transformed = source;
         const changes = [];
         const todos = [];
-        const r1 = (0, createFunction_1.transformCreateFunction)(transformed);
-        if (r1.changed) {
-            transformed = r1.code;
-            changes.push("createFunction trigger moved to options");
-        }
-        const r2 = (0, serveOptions_1.transformServeOptions)(transformed);
+        // Run hook renames BEFORE import renames
+        const r2 = (0, useAccount_1.transformUseAccount)(transformed);
         if (r2.changed) {
             transformed = r2.code;
-            changes.push("serve options moved to client");
+            changes.push("useAccount → useConnection");
         }
-        const r3 = (0, serveHost_1.transformServeHost)(transformed);
+        const r3 = (0, useAccountEffect_1.transformUseAccountEffect)(transformed);
         if (r3.changed) {
             transformed = r3.code;
-            changes.push("serveHost renamed to serveOrigin");
+            changes.push("useAccountEffect → useConnectionEffect");
         }
-        const r4 = (0, streaming_1.transformStreaming)(transformed);
+        const r4 = (0, useSwitchAccount_1.transformUseSwitchAccount)(transformed);
         if (r4.changed) {
             transformed = r4.code;
-            changes.push("streaming option simplified");
+            changes.push("useSwitchAccount → useSwitchConnection");
         }
-        const r5 = (0, stepInvoke_1.transformStepInvoke)(transformed);
+        // Update imports AFTER hook renames
+        const r1 = (0, importRenames_1.transformImportRenames)(transformed);
+        if (r1.changed) {
+            transformed = r1.code;
+            changes.push("wagmi imports updated");
+        }
+        const r5 = (0, connectorImports_1.transformConnectorImports)(transformed);
         if (r5.changed) {
             transformed = r5.code;
-            changes.push("step.invoke string ID replaced");
+            todos.push("Connector imports need peer dependency updates");
         }
-        const r6 = (0, logLevel_1.transformLogLevel)(transformed);
+        const r6 = (0, mutateArgs_1.transformMutateArgs)(transformed);
         if (r6.changed) {
             transformed = r6.code;
-            todos.push("logLevel removed - configure via logger option");
-        }
-        const r7 = (0, gatewayEndpoint_1.transformGatewayEndpoint)(transformed);
-        if (r7.changed) {
-            transformed = r7.code;
-            changes.push("rewriteGatewayEndpoint replaced with gatewayUrl");
-        }
-        const r8 = (0, eventSchemas_1.transformEventSchemas)(transformed);
-        if (r8.changed) {
-            transformed = r8.code;
-            todos.push("EventSchemas removed - migrate to eventType()");
+            todos.push("Mutation hook args need manual review");
         }
         if (changes.length > 0 || todos.length > 0) {
             fs.writeFileSync(file, transformed, "utf-8");

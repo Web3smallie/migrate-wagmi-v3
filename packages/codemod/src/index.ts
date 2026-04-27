@@ -1,15 +1,12 @@
-import { execSync } from "child_process";
 import { glob } from "glob";
 import * as path from "path";
 import * as fs from "fs";
-import { transformCreateFunction } from "./transforms/createFunction";
-import { transformServeOptions } from "./transforms/serveOptions";
-import { transformServeHost } from "./transforms/serveHost";
-import { transformStreaming } from "./transforms/streaming";
-import { transformStepInvoke } from "./transforms/stepInvoke";
-import { transformLogLevel } from "./transforms/logLevel";
-import { transformGatewayEndpoint } from "./transforms/gatewayEndpoint";
-import { transformEventSchemas } from "./transforms/eventSchemas";
+import { transformUseAccount } from "./transforms/useAccount";
+import { transformUseAccountEffect } from "./transforms/useAccountEffect";
+import { transformUseSwitchAccount } from "./transforms/useSwitchAccount";
+import { transformConnectorImports } from "./transforms/connectorImports";
+import { transformMutateArgs } from "./transforms/mutateArgs";
+import { transformImportRenames } from "./transforms/importRenames";
 
 export interface MigrationResult {
   file: string;
@@ -29,35 +26,31 @@ export async function migrate(targetPath: string): Promise<MigrationResult[]> {
   for (const file of files) {
     const source = fs.readFileSync(file, "utf-8");
 
-    if (!source.includes("inngest")) continue;
+    if (!source.includes("wagmi")) continue;
 
     let transformed = source;
     const changes: string[] = [];
     const todos: string[] = [];
 
-    const r1 = transformCreateFunction(transformed);
-    if (r1.changed) { transformed = r1.code; changes.push("createFunction trigger moved to options"); }
+    // Run hook renames BEFORE import renames
+    const r2 = transformUseAccount(transformed);
+    if (r2.changed) { transformed = r2.code; changes.push("useAccount → useConnection"); }
 
-    const r2 = transformServeOptions(transformed);
-    if (r2.changed) { transformed = r2.code; changes.push("serve options moved to client"); }
+    const r3 = transformUseAccountEffect(transformed);
+    if (r3.changed) { transformed = r3.code; changes.push("useAccountEffect → useConnectionEffect"); }
 
-    const r3 = transformServeHost(transformed);
-    if (r3.changed) { transformed = r3.code; changes.push("serveHost renamed to serveOrigin"); }
+    const r4 = transformUseSwitchAccount(transformed);
+    if (r4.changed) { transformed = r4.code; changes.push("useSwitchAccount → useSwitchConnection"); }
 
-    const r4 = transformStreaming(transformed);
-    if (r4.changed) { transformed = r4.code; changes.push("streaming option simplified"); }
+    // Update imports AFTER hook renames
+    const r1 = transformImportRenames(transformed);
+    if (r1.changed) { transformed = r1.code; changes.push("wagmi imports updated"); }
 
-    const r5 = transformStepInvoke(transformed);
-    if (r5.changed) { transformed = r5.code; changes.push("step.invoke string ID replaced"); }
+    const r5 = transformConnectorImports(transformed);
+    if (r5.changed) { transformed = r5.code; todos.push("Connector imports need peer dependency updates"); }
 
-    const r6 = transformLogLevel(transformed);
-    if (r6.changed) { transformed = r6.code; todos.push("logLevel removed - configure via logger option"); }
-
-    const r7 = transformGatewayEndpoint(transformed);
-    if (r7.changed) { transformed = r7.code; changes.push("rewriteGatewayEndpoint replaced with gatewayUrl"); }
-
-    const r8 = transformEventSchemas(transformed);
-    if (r8.changed) { transformed = r8.code; todos.push("EventSchemas removed - migrate to eventType()"); }
+    const r6 = transformMutateArgs(transformed);
+    if (r6.changed) { transformed = r6.code; todos.push("Mutation hook args need manual review"); }
 
     if (changes.length > 0 || todos.length > 0) {
       fs.writeFileSync(file, transformed, "utf-8");
