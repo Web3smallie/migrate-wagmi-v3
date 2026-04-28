@@ -15,6 +15,8 @@ import { transformCreateConfig } from "./transforms/createConfig";
 import { transformChainImports } from "./transforms/chainImports";
 import { transformWrapperHooks } from "./transforms/wrapperHooks";
 import { transformInngestMiddleware } from "./transforms/inngestMiddleware";
+import { transformHookRenames } from "./transforms/hookRenames";
+import { buildWrapperMap, flagWrapperUsages } from "./transforms/wrapperDetection";
 
 export interface MigrationResult {
   file: string;
@@ -44,6 +46,9 @@ export async function migrate(
     absolute: true,
   });
 
+  // Pass 1: Build wrapper map across entire codebase
+  const wrapperMap = buildWrapperMap(files);
+
   for (const file of files) {
     const source = fs.readFileSync(file, "utf-8");
 
@@ -53,6 +58,10 @@ export async function migrate(
     const changes: string[] = [];
     const todos: string[] = [];
     let patternsDetected = 0;
+
+    // Hook renames (high frequency)
+    const r15 = transformHookRenames(transformed);
+    if (r15.changed) { transformed = r15.code; changes.push("Deprecated hooks renamed to v3 equivalents"); patternsDetected++; }
 
     // wagmi transforms
     const r2 = transformUseAccount(transformed);
@@ -81,6 +90,16 @@ export async function migrate(
 
     const r13 = transformWrapperHooks(transformed);
     if (r13.changed) { transformed = r13.code; todos.push("Wrapper hooks flagged for AI review"); patternsDetected++; }
+
+    // Pass 2: Flag wrapper usages across codebase
+    if (Object.keys(wrapperMap).length > 0) {
+      const { code, changed, flagged } = flagWrapperUsages(transformed, wrapperMap);
+      if (changed) {
+        transformed = code;
+        todos.push(`Wrapper hook usages flagged: ${flagged.join(", ")}`);
+        patternsDetected++;
+      }
+    }
 
     // Update imports AFTER hook renames
     const r1 = transformImportRenames(transformed);

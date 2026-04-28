@@ -50,6 +50,8 @@ const createConfig_1 = require("./transforms/createConfig");
 const chainImports_1 = require("./transforms/chainImports");
 const wrapperHooks_1 = require("./transforms/wrapperHooks");
 const inngestMiddleware_1 = require("./transforms/inngestMiddleware");
+const hookRenames_1 = require("./transforms/hookRenames");
+const wrapperDetection_1 = require("./transforms/wrapperDetection");
 async function migrate(targetPath, dryRun = false) {
     const results = [];
     const files = await (0, glob_1.glob)("**/*.{ts,tsx,js,jsx}", {
@@ -57,6 +59,8 @@ async function migrate(targetPath, dryRun = false) {
         ignore: ["**/node_modules/**", "**/dist/**", "**/.next/**"],
         absolute: true,
     });
+    // Pass 1: Build wrapper map across entire codebase
+    const wrapperMap = (0, wrapperDetection_1.buildWrapperMap)(files);
     for (const file of files) {
         const source = fs.readFileSync(file, "utf-8");
         if (!source.includes("wagmi") && !source.includes("inngest"))
@@ -65,6 +69,13 @@ async function migrate(targetPath, dryRun = false) {
         const changes = [];
         const todos = [];
         let patternsDetected = 0;
+        // Hook renames (high frequency)
+        const r15 = (0, hookRenames_1.transformHookRenames)(transformed);
+        if (r15.changed) {
+            transformed = r15.code;
+            changes.push("Deprecated hooks renamed to v3 equivalents");
+            patternsDetected++;
+        }
         // wagmi transforms
         const r2 = (0, useAccount_1.transformUseAccount)(transformed);
         if (r2.changed) {
@@ -119,6 +130,15 @@ async function migrate(targetPath, dryRun = false) {
             transformed = r13.code;
             todos.push("Wrapper hooks flagged for AI review");
             patternsDetected++;
+        }
+        // Pass 2: Flag wrapper usages across codebase
+        if (Object.keys(wrapperMap).length > 0) {
+            const { code, changed, flagged } = (0, wrapperDetection_1.flagWrapperUsages)(transformed, wrapperMap);
+            if (changed) {
+                transformed = code;
+                todos.push(`Wrapper hook usages flagged: ${flagged.join(", ")}`);
+                patternsDetected++;
+            }
         }
         // Update imports AFTER hook renames
         const r1 = (0, importRenames_1.transformImportRenames)(transformed);
