@@ -232,8 +232,10 @@ boring-ai-migration-suite/
 - https://www.inngest.com/docs/reference/typescript/v4/migrations/v3-to-v4 
 - Case Study: https://dev.to/web3smallie/automating-wagmi-v2-v3-and-inngest-v3-v4-migrations-with-zero-false-positives-71k 
 - Codemod Registry: https://app.codemod.com/registry/@web3smallie/migrate-wagmi-v3
-- https://migrate-wagmi-v3.vercel.app  
-- GitHub: https://github.com/Web3smallie/migrate-wagmi-v3  
+- Live Demo: https://migrate-wagmi-v3.vercel.app  
+- GitHub: https://github.com/Web3smallie/migrate-wagmi-v3
+- scaffold-eth-2 PR: https://github.com/scaffold-eth/scaffold-eth-2/pull/1278
+- Documenso PR: https://github.com/documenso/documenso/pull/2736
 
 ---
 
