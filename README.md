@@ -249,5 +249,4 @@ boring-ai-migration-suite/
 ---
 
 ## 🏁 Built for
-
 **Codemod Boring AI Hackathon 2026**
