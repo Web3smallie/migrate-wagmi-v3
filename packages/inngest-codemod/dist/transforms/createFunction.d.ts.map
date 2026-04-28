@@ -1,0 +1,1 @@
+{"version":3,"file":"createFunction.d.ts","sourceRoot":"","sources":["../../src/transforms/createFunction.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,eAAe;IAC9B,IAAI,EAAE,MAAM,CAAC;IACb,OAAO,EAAE,OAAO,CAAC;CAClB;AAED,wBAAgB,uBAAuB,CAAC,MAAM,EAAE,MAAM,GAAG,eAAe,CA4BvE"}

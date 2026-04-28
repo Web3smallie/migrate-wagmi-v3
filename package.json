@@ -1,12 +1,19 @@
 {
   "name": "migrate-wagmi-v3",
   "version": "1.0.0",
-  "description": "Automated codemod to migrate wagmi from v2 to v3",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "description": "Automated codemod suite for wagmi v2→v3 and Inngest v3→v4 migrations",
+  "main": "bin/index.js",
+  "bin": {
+    "migrate-wagmi-v3": "./bin/index.js"
   },
-  "keywords": [],
-  "author": "",
+  "scripts": {
+    "test:wagmi": "cd packages/codemod && npm test",
+    "test:inngest": "cd packages/inngest-codemod && npm test",
+    "build:wagmi": "cd packages/codemod && npx tsc",
+    "build:inngest": "cd packages/inngest-codemod && npx tsc",
+    "build": "npm run build:wagmi && npm run build:inngest"
+  },
+  "keywords": ["codemod", "wagmi", "inngest", "migration", "web3"],
+  "author": "web3smallie",
   "license": "MIT"
 }
