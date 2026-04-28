@@ -2,7 +2,31 @@
 
 import { useState } from "react";
 
-const PLACEHOLDER = `import { Inngest, EventSchemas } from "inngest";
+const WAGMI_PLACEHOLDER = `import { useAccount, useAccountEffect, useSwitchAccount } from "wagmi";
+import { injected } from "@wagmi/connectors";
+
+export function WalletStatus() {
+  const { address, status } = useAccount();
+
+  useAccountEffect({
+    onConnect(data) {
+      console.log("Connected!", data);
+    },
+  });
+
+  const { switchAccount } = useSwitchAccount();
+
+  return (
+    <div>
+      <p>Address: {address}</p>
+      <button onClick={() => switchAccount({ connector: injected() })}>
+        Switch Account
+      </button>
+    </div>
+  );
+}`;
+
+const INNGEST_PLACEHOLDER = `import { Inngest, EventSchemas } from "inngest";
 
 const inngest = new Inngest({
   id: "my-app",
@@ -21,11 +45,20 @@ export const userCreated = inngest.createFunction(
 );`;
 
 export default function Home() {
-  const [input, setInput] = useState(PLACEHOLDER);
+  const [ecosystem, setEcosystem] = useState<"wagmi" | "inngest">("wagmi");
+  const [input, setInput] = useState(WAGMI_PLACEHOLDER);
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [migrated, setMigrated] = useState(false);
+
+  const handleEcosystemChange = (eco: "wagmi" | "inngest") => {
+    setEcosystem(eco);
+    setInput(eco === "wagmi" ? WAGMI_PLACEHOLDER : INNGEST_PLACEHOLDER);
+    setOutput("");
+    setMigrated(false);
+    setError("");
+  };
 
   const handleMigrate = async () => {
     setLoading(true);
@@ -34,7 +67,7 @@ export default function Home() {
       const res = await fetch("/api/migrate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: input }),
+        body: JSON.stringify({ code: input, ecosystem }),
       });
       const data = await res.json();
       if (data.error) {
@@ -55,18 +88,41 @@ export default function Home() {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold mb-2">
-            migrate-inngest-v4
+            Boring AI Migration Suite
           </h1>
-          <p className="text-gray-400 text-lg">
-            Automatically migrate your Inngest TypeScript SDK from v3 to v4
+          <p className="text-gray-400 text-lg mb-6">
+            Automated codemod for wagmi v2→v3 and Inngest v3→v4
           </p>
+
+          <div className="flex justify-center gap-4 mb-4">
+            <button
+              onClick={() => handleEcosystemChange("wagmi")}
+              className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
+                ecosystem === "wagmi"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+              }`}
+            >
+              wagmi v2 → v3
+            </button>
+            <button
+              onClick={() => handleEcosystemChange("inngest")}
+              className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
+                ecosystem === "inngest"
+                  ? "bg-purple-600 text-white"
+                  : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+              }`}
+            >
+              Inngest v3 → v4
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-400 uppercase tracking-wider">
-                v3 Code (Input)
+                {ecosystem === "wagmi" ? "v2 Code (Input)" : "v3 Code (Input)"}
               </span>
             </div>
             <textarea
@@ -84,7 +140,7 @@ export default function Home() {
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-400 uppercase tracking-wider">
-                v4 Code (Output)
+                {ecosystem === "wagmi" ? "v3 Code (Output)" : "v4 Code (Output)"}
               </span>
               {migrated && (
                 <span className="text-xs text-green-400 font-medium">
@@ -105,9 +161,11 @@ export default function Home() {
           <button
             onClick={handleMigrate}
             disabled={loading}
-            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded-lg font-semibold text-lg transition-colors"
+            className={`px-8 py-3 ${
+              ecosystem === "wagmi" ? "bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800" : "bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800"
+            } disabled:cursor-not-allowed rounded-lg font-semibold text-lg transition-colors`}
           >
-            {loading ? "Migrating..." : "Migrate to v4"}
+            {loading ? "Migrating..." : `Migrate to ${ecosystem === "wagmi" ? "v3" : "v4"}`}
           </button>
         </div>
 
@@ -116,8 +174,11 @@ export default function Home() {
         )}
 
         <div className="text-center text-gray-500 text-sm">
-          <p>
-            Built for the Codemod Boring AI Hackathon
+          <p>Built for the Codemod Boring AI Hackathon 2026</p>
+          <p className="mt-1">
+            <a href="https://github.com/Web3smallie/migrate-wagmi-v3" className="text-blue-400 hover:underline">
+              GitHub
+            </a>
           </p>
         </div>
       </div>
