@@ -1,0 +1,23 @@
+name: Publish Codemod
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: cd packages/codemod/migrate-wagmi-v3 && npm install
+
+      - name: Publish to Codemod Registry
+        run: cd packages/codemod/migrate-wagmi-v3 && npx codemod publish .
+        env:
+          CODEMOD_AUTH_TOKEN: ${{ secrets.CODEMOD_AUTH_TOKEN }}

@@ -1,0 +1,14 @@
+{
+  "name": "@web3smallie/migrate-wagmi-v3",
+  "version": "0.1.0",
+  "description": "Automated codemod suite for wagmi v2 to v3 and Inngest v3 to v4 migrations with zero false positives",
+  "type": "module",
+  "scripts": {
+    "test": "npx codemod@latest jssg test -l typescript ./scripts/codemod.ts",
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@codemod.com/jssg-types": "latest",
+    "typescript": "latest"
+  }
+}
