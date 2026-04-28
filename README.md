@@ -229,7 +229,8 @@ boring-ai-migration-suite/
 ## 🔗 References
 
 - https://wagmi.sh/react/guides/migrate-from-v2-to-v3  
-- https://www.inngest.com/docs/reference/typescript/v4/migrations/v3-to-v4  
+- https://www.inngest.com/docs/reference/typescript/v4/migrations/v3-to-v4 
+- Case Study: https://dev.to/web3smallie/automating-wagmi-v2-v3-and-inngest-v3-v4-migrations-with-zero-false-positives-71k 
 - https://migrate-wagmi-v3.vercel.app  
 - GitHub: https://github.com/Web3smallie/migrate-wagmi-v3  
 
