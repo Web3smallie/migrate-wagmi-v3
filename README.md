@@ -121,7 +121,17 @@ This system eliminates that friction by:
 
 👉 Migration completed safely with no regressions.
 
-PR: https://github.com/scaffold-eth/scaffold-eth-2/pull/1278
+PR (v1 first attempt, got maintainer feedback): https://github.com/scaffold-eth/scaffold-eth-2/pull/1277
+PR (v2 - 13 files, 73% coverage):  : https://github.com/scaffold-eth/scaffold-eth-2/pull/1278
+
+
+A pull request was opened to validate the migration on a real production repository:
+PR (v1) and PR (v2)
+
+Maintainer Reviewed feedback on PR (v1) : https://github.com/scaffold-eth/scaffold-eth-2/pull/1277 ) indicated that, since wagmi is a core dependency, the migration would be handled internally by the core team.
+
+👉 This confirms the codemod produces safe, production-ready changes while respecting real-world ownership and deployment constraints.
+
 
 ---
 
